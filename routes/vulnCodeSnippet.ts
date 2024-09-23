@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+import * as path from 'node:path'
 import { type NextFunction, type Request, type Response } from 'express'
 import fs from 'fs'
 import yaml from 'js-yaml'
@@ -72,7 +73,11 @@ export const getVerdict = (vulnLines: number[], neutralLines: number[], selected
 }
 
 exports.checkVulnLines = () => async (req: Request<Record<string, unknown>, Record<string, unknown>, VerdictRequestBody>, res: Response, next: NextFunction) => {
-  const key = req.body.key
+  const inputToSanitize = String(req.body.key || '').replace('\0', '').replace(/^(\.\.(\/|\\$))+/, '')
+  const safeInput = path.resolve(path.sep, 
+    path.normalize(inputToSanitize)
+  ).substr(1)
+  const key = safeInput
   let snippetData
   try {
     snippetData = await retrieveCodeSnippet(key)
